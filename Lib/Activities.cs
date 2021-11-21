@@ -52,6 +52,37 @@ namespace Lib
             return GetStatisticData();
         }
 
+        public StatisticData RunSimulationTillTheEnd()
+        {
+            _watch.Start();
+            var scorekeeper = _prisioners.FirstOrDefault(f => f is Scorekeeper) as Scorekeeper;
+            if (scorekeeper == null)
+            {
+                //present error message: must have one scorekeeper
+                //stop the flow
+            }
+            Random rnd = new Random();
+            do
+            {
+                var randomPrisionerIndex = rnd.Next(0, _prisioners.Count);
+
+                var randomPrisioner = _prisioners[randomPrisionerIndex];
+
+                _warden.Visit(randomPrisioner);
+
+                //log here status of switchA, switchB and the Counter
+                _log.Add(new Tuple<Prisioner, int, bool, bool>(randomPrisioner,
+                    scorekeeper.Score, _warden.SwictchA, _warden.SwictchB));
+                var idsEnteredPrisioners = _log.GroupBy(info => info.Item1).Select(group => new { Prisioner = group.Key, Count = group.Count() }).OrderBy(x => x.Count).Select(s => s.Prisioner.Id).OrderBy(o => o).ToList();
+                Debug.WriteLine(String.Join(",", idsEnteredPrisioners));
+            } while (scorekeeper.Score != _prisioners.Count);
+
+
+
+            _watch.Stop();
+            return GetStatisticData();
+        }
+
         public StatisticData GetStatisticData()
         {
             StatisticData = new StatisticData();
@@ -70,10 +101,19 @@ namespace Lib
 
             StatisticData.AvgVisits = coountLogGroup.Select(s => s.Count).Average();
 
-            StatisticData.Top25VistedPrisioners = coountLogGroup.Select(s => s.Prisioner).Take(coountLogGroup.Count() / 4).ToList();
+            StatisticData.Top25VistedPrisioners = coountLogGroup.OrderByDescending(o => o.Count).Select(s => s.Prisioner).Take(coountLogGroup.Count() / 4).ToList();
 
-
+            StatisticData.TotalVisitsByWarden = _log.Count;
             StatisticData.SimulationTime = _watch.Elapsed;
+
+            if (Environment.Is64BitProcess)
+            {//64bit process
+                StatisticData.MaxRAMMB = 4096;
+            }
+            else
+            {//32Bit process
+                StatisticData.MaxRAMMB = 2048;
+            }
 
             return StatisticData;
         }

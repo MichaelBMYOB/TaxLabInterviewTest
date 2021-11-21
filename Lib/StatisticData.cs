@@ -12,9 +12,9 @@ namespace Lib
         public Prisioner TopVisited { get; set; }
         public Prisioner LeastVisited { get; set; }
         public double AvgVisits { get; set; }
-        public int TotalVisitsVarden { get; set; }
+        public int TotalVisitsByWarden { get; set; }
         public TimeSpan SimulationTime { get; set; }
-        public int MinRAMMB { get; set; }
+        public int MaxRAMMB { get; set; }
         public List<Prisioner> Top25VistedPrisioners { get; set; }
     }
 }
